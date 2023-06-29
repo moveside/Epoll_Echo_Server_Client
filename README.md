@@ -33,16 +33,16 @@
 - User Class 구현 (3h)
 - Client에서 Server에 문자열 전송 (3h)
 - Server에서 Client에 문자열 전송 (3h)
-예상 소모시간 : 15h(2.5일)
+<br><br>예상 소모시간 : 15h(2.5일)
 ## 2nd Milestone
 - Client UI 구현 (9h)
 - Client 전송된 문자열을 Server의 자료구조에 삽입/삭제 (6h)
 - Client 요청시 Server에서 Client에 현재 데이터 전송 (3h)
-예상 소모시간 : 15h (2.5일)
+<br><br>예상 소모시간 : 15h (2.5일)
 ## 3rd Milestone
 - 멀티 스레드 설정 및 구현 (18h)
 - 다수의 클라이언트 요청 처리 (12h)
-예상 소모시간 : 30h (5일)
+<br><br>예상 소모시간 : 30h (5일)
 
 
 
