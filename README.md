@@ -39,13 +39,13 @@
 - Client 요청시 Server에서 Client에 현재 데이터 전송 (3h)
 <br><br>예상 소모시간 : 15h (2.5일)
 ## 3rd Milestone
-- Client Client N개 생성·연결 (3h)
+- Client N개 생성·연결 (3h)
 - Client 요청 저장 (3h)
 - 멀티 스레드 설정 및 구현 (18h)
 - 다수의 클라이언트 요청 처리 (12h)
 <br><br>예상 소모시간 : 36h (6일)
 
-<br><br>총 프로젝트 예상시간 : 63h(11일)
+<br><br>총 프로젝트 예상시간 : 63h (11일)
 
 
 
