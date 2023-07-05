@@ -4,7 +4,7 @@
 
 
 
-
+#include "packet.h"
 
 #include<iostream>
 
@@ -31,18 +31,28 @@ private:
 	WSADATA wsadata;
 	SOCKET m_sockfd;
 	SOCKADDR_IN m_addr;
-
+	char m_name[16];
+	Packet m_sendPacket;
 public:
 	~Client();
+	SOCKET get_sockfd();
 
 	void start_client();
 	void socket_setup();
 	void socket_connect();
-	void socket_loop();
+	void socket_close();
+	
+
+
 
 	void send_name(char* name);
 	void send_data();
+	void send_delete();
+	void send_log();
+
+	void send_packet();
 	void recv_data();
+	
 
 };
 

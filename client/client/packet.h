@@ -24,8 +24,8 @@ enum packetCommand
 struct Packet
 {
 	packetCommand cmd;
-	int data_size;
 	char data[1024];
+	char name[16];
 };
 
 

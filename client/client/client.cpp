@@ -7,9 +7,11 @@
 
 Client::~Client()
 {
-
 }
-
+SOCKET Client::get_sockfd()
+{
+	return m_sockfd;
+}
 
 
 
@@ -46,60 +48,102 @@ void Client::socket_connect()
 	cout << "connect success" << endl;
 }
 
+void Client::socket_close()
+{
+	closesocket(m_sockfd);
+	WSACleanup();
+	exit(0);
+}
+
+
 void Client::send_name(char* name)
 {
 	Packet packet;
 	memset(&packet, 0, sizeof(packet));
 	packet.cmd = CMD_USER_LOGIN_SEND;
-	packet.data_size = 800;
-	strcpy(packet.data, name);
+	strcpy(packet.name, name);
 	char* buffer = (char*)&packet;
 	int n = send(m_sockfd, buffer, sizeof(packet),0);
 	if (n < 0)
 	{
 		cout << "send error" << endl;
 	}
+	strcpy(m_name, name);
+	recv_data();
 }
-
-
-
 
 
 void Client::send_data()
 {
 	char msg[1024];
-	cout << "input send data : ";
+	cout << "input data : ";
 	cin >> msg;
-	Packet packet;
-	packet.cmd = CMD_USER_DATA_SEND;
-	strcpy(packet.data, msg);
-	packet.data_size = 5;
-	if ((send(m_sockfd, (char*)&packet, sizeof(packet), 0)) < 0)
+	
+	m_sendPacket.cmd = CMD_USER_DATA_SEND;
+	strcpy(m_sendPacket.data, msg);
+	strcpy(m_sendPacket.name, m_name);
+	// else cout << packet.data << " send" << endl;
+}
+
+void Client::send_delete()
+{
+	m_sendPacket.cmd = CMD_USER_DEL_SEND;
+	strcpy(m_sendPacket.name, m_name);
+}
+
+void Client::send_log()
+{
+	cout << "send log" << endl;
+	m_sendPacket.cmd = CMD_USER_LOG_SEND;
+	strcpy(m_sendPacket.name, m_name);
+}
+
+void Client::send_packet()
+{
+	if ((send(m_sockfd, (char*)&m_sendPacket, sizeof(m_sendPacket), 0)) < 0)
 	{
 		cout << "send error" << endl;
 	}
-	else cout << packet.data << " send" << endl;
+	memset(&m_sendPacket, 0, sizeof(m_sendPacket));
 }
 
-void Client::socket_loop()
-{
-	while (1)
-	{
-		cout << "LOOP" << endl;
-		send_data();
-		Sleep(1000);
-		recv_data();
-	}
-	
-}
 void Client::recv_data()
 {
-	char buffer[1032];
-	if (recv(m_sockfd, buffer, 1032, 0) < 0)
+	char buffer[1050];
+	if (recv(m_sockfd, buffer, 1050, 0) < 0)
 	{
 		cout << "recv error" << endl;
 	}
-	Packet* pa = (Packet*)buffer;
-	cout << pa->data << " recv" << endl;
+	Packet* packet = (Packet*)buffer;
+	switch (packet->cmd)
+	{
+	case CMD_USER_LOGIN_RECV:
+	{
+		cout << "LOGIN SUCCESS" << endl;
+		break;
+	}
+	case CMD_USER_DATA_RECV:
+	{
+		cout << packet->name << " : " << packet->data << endl;
+		break;
+	}
+	case CMD_USER_DEL_RECV:
+	{
+		cout << "DELETE SUCCESS" << endl;
+		break;
+	}
+	case CMD_USER_LOG_RECV:
+	{
+		cout << "============LOG============" << endl;
+		cout << packet->data;
+		cout << "============LOG============" << endl;
+		break;
+	}
+	default:
+	{
+		cout << "error packet" << endl;
+		break;
+	}
+	}
+	
 }
-
