@@ -1,8 +1,0 @@
-﻿  user.cpp
-C:\Users\user\Documents\Epoll_Echo_Server_Client\client\client\user.cpp(31,2): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  코드를 생성하고 있습니다.
-  1 of 60 functions ( 1.7%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    1 functions had inline decision re-evaluated but remain unchanged
-  코드를 생성했습니다.
-  client.vcxproj -> C:\Users\user\Documents\Epoll_Echo_Server_Client\client\x64\Release\client.exe

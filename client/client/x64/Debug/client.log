@@ -1,6 +1,0 @@
-﻿  Echoclient.cpp
-client.obj : error LNK2019: __imp_connect"public: void __cdecl client::socket_connect(void)" (?socket_connect@client@@QEAAXXZ) 함수에서 참조되는 확인할 수 없는 외부 기호
-client.obj : error LNK2019: __imp_htons"public: void __cdecl client::socket_setup(void)" (?socket_setup@client@@QEAAXXZ) 함수에서 참조되는 확인할 수 없는 외부 기호
-client.obj : error LNK2019: __imp_inet_addr"public: void __cdecl client::socket_setup(void)" (?socket_setup@client@@QEAAXXZ) 함수에서 참조되는 확인할 수 없는 외부 기호
-client.obj : error LNK2019: __imp_socket"public: void __cdecl client::socket_setup(void)" (?socket_setup@client@@QEAAXXZ) 함수에서 참조되는 확인할 수 없는 외부 기호
-C:\Users\user\source\repos\client\x64\Debug\client.exe : fatal error LNK1120: 4개의 확인할 수 없는 외부 참조입니다.
