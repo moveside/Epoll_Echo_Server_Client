@@ -48,7 +48,6 @@ private:
 	struct epoll_event m_ev;
 	struct epoll_event m_events[Maxevent];
 	Packet m_sendPacket;
-
 	unordered_map<int,User*> m_users;
 	list<pair<string,string>> m_clients_log;
 	set<string> m_userid;

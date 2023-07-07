@@ -117,7 +117,7 @@ void Epollserver::server_read(Packet* packet,int client_fd)
 		cout << packet->data << " recv by " <<  packet->name <<endl;
 
 		auto findIter = m_users.find(client_fd);
-		findIter->second->add_log(packet->data); // 유저별 개
+		findIter->second->add_log(packet->data);
 		std::string h = packet->name;
 		m_clients_log.push_back(make_pair(packet->name,packet->data));
 
@@ -135,6 +135,7 @@ void Epollserver::server_read(Packet* packet,int client_fd)
 				}
 		);
 
+		m_sendPacket.cmd =   CMD_USER_DEL_RECV;
 		break;
 	}
 	case CMD_USER_LOG_SEND:
