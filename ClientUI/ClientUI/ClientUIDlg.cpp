@@ -114,7 +114,11 @@ BOOL CClientUIDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
-
+	if (!user.start())
+	{
+		MessageBox(_T("서버 연결 실패"), _T("Connect"), MB_ICONINFORMATION);
+		EndDialog(0);
+	}
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
 
@@ -177,29 +181,24 @@ void CClientUIDlg::OnBnClickedButton1()
 		CString cinput_ID;
 		p->GetWindowTextW(cinput_ID);
 		string sinput_ID = CT2CA(cinput_ID);
-		if (!user.start())
-		{
-			MessageBox(_T("Server Connect Failed"), _T("Connect"), MB_ICONINFORMATION);
-			return;
-		}
 		user.send_data(LOGIN, sinput_ID);
 		Packet packet = user.recv_data();
-		if (packet.cmd = CMD_USER_LOGIN_RECV)
+		if (packet.cmd == CMD_USER_LOGIN_RECV && packet.data[0]=='1')
 		{
-			MessageBox(_T("Login Success"), _T("Login"), MB_ICONINFORMATION);
-
+			MessageBox(_T("로그인 성공"), _T("Login"), MB_ICONINFORMATION);
+			user.set_name(sinput_ID.c_str());
 			EndDialog(0);
 			ClientMenu menu;
 			menu.DoModal();
 		}
 		else
 		{
-			MessageBox(_T("Login Failed"), _T("Login"), MB_ICONINFORMATION);
+			MessageBox(_T("로그인 실패"), _T("Login"), MB_ICONINFORMATION);
 		}
 	}
 	else
 	{
-		MessageBox(_T("Input ID"), _T("Login"), MB_ICONINFORMATION);
+		MessageBox(_T("아이디를 입력하세요"), _T("Login"), MB_ICONINFORMATION);
 	}
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 }
@@ -210,3 +209,5 @@ void CClientUIDlg::OnBnClickedCancel()
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	CDialogEx::OnCancel();
 }
+
+

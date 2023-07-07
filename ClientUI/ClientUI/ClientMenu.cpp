@@ -48,6 +48,7 @@ BEGIN_MESSAGE_MAP(ClientMenu, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON3, &ClientMenu::OnBnClickedButton3)
 	ON_BN_CLICKED(IDCANCEL, &ClientMenu::OnBnClickedCancel)
 
+	
 END_MESSAGE_MAP()
 
 
@@ -105,12 +106,14 @@ void ClientMenu::recv_data()
 	{
 	case CMD_USER_DATA_RECV:
 	{
-		Notice.SetWindowText(L"Send data Success");
+		CString recv_data(packet.data);
+		CString notice_text = recv_data + (CString)" 보냄";
+		Notice.SetWindowText((notice_text));
 		break;
 	}
 	case CMD_USER_LOG_RECV:
 	{
-		Notice.SetWindowText(L"LOG Success");
+		Notice.SetWindowText(L"로그 출력");
 		Log_Data.ResetContent();
 		string data = packet.data;
 		int pos = 0;
@@ -132,7 +135,7 @@ void ClientMenu::recv_data()
 	}
 	case CMD_USER_DEL_RECV:
 	{
-		Notice.SetWindowText(L"DEL Success");
+		Notice.SetWindowText(L"내 로그 삭제");
 		break;
 	}
 	default:
@@ -141,4 +144,7 @@ void ClientMenu::recv_data()
 	}
 	}
 }
+
+
+
 

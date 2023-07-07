@@ -4,6 +4,16 @@
 
 #include "client.h"
 
+enum CMD
+{
+	SEND = 1,
+	LOG,
+	DEL,
+	LOGIN
+};
+
+
+
 class User
 {
 private:
@@ -17,14 +27,13 @@ public:
 	bool start();
 	bool send_name(string name);
 
-	void set_name(char* str);
+	void set_name(const char* str);
 	char* get_name();
 
 	bool send_data(CMD cmd,string data);
 	Packet recv_data();
 	
 
-	void user_cmd();
 };
 
 #endif

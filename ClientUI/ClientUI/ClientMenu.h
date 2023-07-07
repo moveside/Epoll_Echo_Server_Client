@@ -37,4 +37,5 @@ public:
 	void recv_data();
 	afx_msg void OnEnChangeEdit1();
 	CString Input_Data;
+	afx_msg void OnStnClickedStaticName();
 };
