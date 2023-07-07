@@ -105,11 +105,20 @@ void Epollserver::server_read(Packet* packet,int client_fd)
 	{
 	case CMD_USER_LOGIN_SEND:
 	{
-		User *user = new User(packet->name,client_fd);
-		m_users.insert(make_pair(client_fd,user));
-		cout << user->get_name() << " connect" << endl;
-
+		if(m_user_name.find(packet->name) != m_user_name.end()) // 로그인 실패
+		{
+			m_sendPacket.data[0]='0';
+		}
+		else // 성공
+		{
+			User *user = new User(packet->name,client_fd);
+			m_users.insert(make_pair(client_fd,user));
+			m_user_name.insert(packet->name);
+			cout << user->get_name() << " Login" << endl;
+			m_sendPacket.data[0]='1';
+		}
 		m_sendPacket.cmd = CMD_USER_LOGIN_RECV;
+
 		break;
 	}
 	case CMD_USER_DATA_SEND:
@@ -117,10 +126,13 @@ void Epollserver::server_read(Packet* packet,int client_fd)
 		cout << packet->data << " recv by " <<  packet->name <<endl;
 
 		auto findIter = m_users.find(client_fd);
-		findIter->second->add_log(packet->data);
 		std::string h = packet->name;
 		m_clients_log.push_back(make_pair(packet->name,packet->data));
 
+		if(m_clients_log.size()>=40)
+		{
+			m_clients_log.pop_front();
+		}
 		m_sendPacket.cmd = CMD_USER_DATA_RECV;
 		strcpy(m_sendPacket.data,packet->data);
 		strcpy(m_sendPacket.name,packet->name);
@@ -131,8 +143,7 @@ void Epollserver::server_read(Packet* packet,int client_fd)
 		cout  <<  packet->name << " delete request" << endl;
 		string n = packet->name;
 		m_clients_log.remove_if([n](pair<string,string> el)
-				{ return (el.first.compare(n)==0);
-				}
+				{ return (el.first.compare(n)==0);}
 		);
 
 		m_sendPacket.cmd =   CMD_USER_DEL_RECV;
@@ -164,7 +175,7 @@ void Epollserver::server_read(Packet* packet,int client_fd)
 
 void Epollserver::server_write(int client_fd)
 {
-	if((write(client_fd,(char*)&m_sendPacket,1050)) < 0)
+	if((write(client_fd,(char*)&m_sendPacket,sizeof(m_sendPacket))) < 0)
 	{
 		perror("write");
 	}
@@ -190,8 +201,8 @@ void Epollserver::socket_wait()
 			else
 			{
 				int client = m_events[i].data.fd;
-				char buffer[1050];
-				int n = read(client,buffer,1050);
+				char buffer[sizeof(Packet) + 6];
+				int n = read(client,buffer,sizeof(buffer));
 				if(n < 0)
 				{
 					break;
@@ -204,10 +215,14 @@ void Epollserver::socket_wait()
 				else if(n==0)
 				{
 					auto findIter = m_users.find(client);
-					cout << findIter->second->get_name() << " disconnect" << endl;
-					m_users.erase(findIter);
-					epoll_ctl(m_epfd,EPOLL_CTL_DEL,client,&m_ev);
-					close(client);
+					if(findIter != m_users.end())
+					{
+						cout << findIter->second->get_name() << " disconnect" << endl;
+						m_user_name.erase(findIter->second->get_name());
+						m_users.erase(findIter);
+						epoll_ctl(m_epfd,EPOLL_CTL_DEL,client,&m_ev);
+						close(client);
+					}
 				}
 				else
 				{
@@ -215,8 +230,6 @@ void Epollserver::socket_wait()
 					server_read(packet,client);
 					server_write(client);
 				}
-
-
 			}
 		}
 	}

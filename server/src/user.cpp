@@ -21,7 +21,3 @@ char* User::get_name()
 	return m_name;
 }
 
-void User::add_log(string st)
-{
-	m_log.push_back(st);
-}

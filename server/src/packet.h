@@ -20,13 +20,10 @@ enum packetCommand
   CMD_USER_LOG_RECV
 };
 
-
-
-
 struct Packet
 {
   packetCommand cmd;
-  char data[1024];
+  char data[2048];
   char name[16];
 };
 

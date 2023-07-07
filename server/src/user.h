@@ -21,15 +21,12 @@ private:
 	char m_name[16];
 	int m_sockfd;
 
-	vector<string> m_log;
 public:
 
 	User(char* name,int sockfd);
 	~User();
 
-	void add_log(string st);
 	char* get_name();
-
 };
 
 
