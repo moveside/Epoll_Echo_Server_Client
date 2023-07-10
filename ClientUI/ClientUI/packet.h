@@ -26,7 +26,13 @@ struct Packet
 };
 
 
-
+enum CMD
+{
+	SEND = 1,
+	LOG,
+	DEL,
+	LOGIN
+};
 
 
 #endif // !PACKET_H_

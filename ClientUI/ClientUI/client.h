@@ -42,21 +42,10 @@ public:
 	bool socket_connect();
 	void socket_close();
 
-
-
-
-	bool send_name(const char* name);
-	void send_data();
-	void send_delete();
-	void send_log();
-
-
-
 	bool send_packet(CMD cmd,string data);
-	Packet recv_data();
-
-
+	Packet recv_packet();
 };
+
 
 
 

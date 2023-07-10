@@ -13,11 +13,7 @@ bool User::start()
 	return client.start_client();
 }
 
-bool User::send_name(string name)
-{
-	strcpy(m_name, name.c_str());
-	return client.send_name(name.c_str());
-}
+
 
 void User::set_name(const char* str)
 {
@@ -35,5 +31,5 @@ bool User::send_data(CMD cmd, string data)
 
 Packet User::recv_data()
 {
-	return client.recv_data();
+	return client.recv_packet();
 }
