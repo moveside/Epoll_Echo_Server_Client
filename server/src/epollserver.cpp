@@ -69,10 +69,8 @@ void Epollserver::socket_ctl()
 		close(m_epfd);
 	}
 }
-
 void Epollserver::client_connect()
 {
-	cout << "connect start" << endl;
 	struct sockaddr_in client_addr;
 	socklen_t client_addr_len = sizeof(client_addr);
 	int client_fd;
@@ -81,10 +79,8 @@ void Epollserver::client_connect()
 		perror("client connect");
 		return;
 	}
-	//논블로킹
 	int flag = fcntl(client_fd,F_GETFL,0);
 	fcntl(client_fd,F_SETFL,flag|O_NONBLOCK);
-
 	struct epoll_event event;
 	memset(&event,0,sizeof(event));
 	event.events = EPOLLIN;
@@ -125,8 +121,7 @@ void Epollserver::server_read(Packet* packet,int client_fd)
 	{
 		cout << packet->data << " recv by " <<  packet->name <<endl;
 
-		auto findIter = m_users.find(client_fd);
-		std::string h = packet->name;
+		string h = packet->name;
 		m_clients_log.push_back(make_pair(packet->name,packet->data));
 
 		if(m_clients_log.size()>=40)
@@ -146,7 +141,7 @@ void Epollserver::server_read(Packet* packet,int client_fd)
 				{ return (el.first.compare(n)==0);}
 		);
 
-		m_sendPacket.cmd =   CMD_USER_DEL_RECV;
+		m_sendPacket.cmd = CMD_USER_DEL_RECV;
 		break;
 	}
 	case CMD_USER_LOG_SEND:
@@ -160,7 +155,6 @@ void Epollserver::server_read(Packet* packet,int client_fd)
 			log += el.second;
 			log += "\n";
 		}
-
 		m_sendPacket.cmd = CMD_USER_LOG_RECV;
 		strcpy(m_sendPacket.data,log.c_str());
 		strcpy(m_sendPacket.name,packet->name);
@@ -179,8 +173,6 @@ void Epollserver::server_write(int client_fd)
 	{
 		perror("write");
 	}
-
-
 }
 void Epollserver::socket_wait()
 {
@@ -203,25 +195,20 @@ void Epollserver::socket_wait()
 				int client = m_events[i].data.fd;
 				char buffer[sizeof(Packet) + 6];
 				int n = read(client,buffer,sizeof(buffer));
-				if(n < 0)
+				if(n < 0) // 에러
 				{
 					break;
-						/*
-						perror("read error");
-						epoll_ctl(m_epfd,EPOLL_CTL_DEL,client,&m_ev);
-						close(client);
-						*/
 				}
-				else if(n==0)
+				else if(n==0) // 연결 해제
 				{
 					auto findIter = m_users.find(client);
 					if(findIter != m_users.end())
 					{
-						cout << findIter->second->get_name() << " disconnect" << endl;
-						m_user_name.erase(findIter->second->get_name());
-						m_users.erase(findIter);
-						epoll_ctl(m_epfd,EPOLL_CTL_DEL,client,&m_ev);
-						close(client);
+					cout << findIter->second->get_name() << " disconnect" << endl;
+					m_user_name.erase(findIter->second->get_name());
+					m_users.erase(findIter);
+					epoll_ctl(m_epfd,EPOLL_CTL_DEL,client,&m_ev);
+					close(client);
 					}
 				}
 				else

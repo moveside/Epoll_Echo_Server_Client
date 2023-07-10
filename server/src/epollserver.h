@@ -61,12 +61,9 @@ public:
 	void socket_bind();
 	void socket_ctl();
 	void client_connect();
-
 	void socket_wait();
-
 	void server_read(Packet* packet,int client_fd);
 	void server_write(int clinet_fd);
-
 };
 
 
