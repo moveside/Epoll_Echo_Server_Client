@@ -20,6 +20,7 @@ void Epollserver::start()
 	socket_setup();
 	socket_bind();
 	socket_ctl();
+	set_threadPool();
 	socket_wait();
 }
 
@@ -69,6 +70,23 @@ void Epollserver::socket_ctl()
 		close(m_epfd);
 	}
 }
+
+void Epollserver::set_threadPool()
+{
+	for(int i=0;i<Count_Readthread;i++)
+	{
+		threadPool.push_back(thread(&Epollserver::thread_read,this));
+	}
+	for(int i=0;i<Count_Writethread;i++)
+	{
+		threadPool.push_back(thread(&Epollserver::thread_write,this));
+	}
+	for(int i=0;i<2;i++)
+	{
+		threadPool[i].detach();
+	}
+}
+
 void Epollserver::client_connect()
 {
 	struct sockaddr_in client_addr;
@@ -174,6 +192,131 @@ void Epollserver::server_write(int client_fd)
 		perror("write");
 	}
 }
+
+void Epollserver::thread_read()
+{
+	while(1)
+	{
+		if(!m_requestPool.empty())
+		{
+
+			request_mutex.lock();
+
+			pair<Packet,int> el = m_requestPool.front();
+			m_requestPool.pop();
+
+			request_mutex.unlock();
+
+			Packet* packet = new Packet();
+			switch(el.first.cmd)
+			{
+			case CMD_USER_LOGIN_SEND:
+			{
+				if(m_user_name.find(el.first.name) != m_user_name.end()) // 로그인 실패
+				{
+					packet->data[0]='0';
+				}
+				else // 성공
+				{
+					User *user = new User(el.first.name,el.second);
+					static mutex login_mutex;
+					login_mutex.lock();
+
+					m_users.insert(make_pair(el.second,user));
+					m_user_name.insert(el.first.name);
+
+					login_mutex.unlock();
+					cout << user->get_name() << " Login thread" << endl;
+					packet->data[0]='1';
+				}
+				packet->cmd = CMD_USER_LOGIN_RECV;
+				strcpy(packet->name,el.first.name);
+				break;
+			}
+			case CMD_USER_DATA_SEND:
+			{
+				cout << el.first.data << " recv by " <<  el.first.name <<endl;
+
+				string h = el.first.name;
+				static mutex logPush_mutex;
+				logPush_mutex.lock();
+
+				m_clients_log.push_back(make_pair(el.first.name,el.first.data));
+				if(m_clients_log.size()>=40)
+				{
+					m_clients_log.pop_front();
+				}
+
+				logPush_mutex.unlock();
+				packet->cmd = CMD_USER_DATA_RECV;
+				strcpy(packet->data,el.first.data);
+				strcpy(packet->name,el.first.name);
+				break;
+			}
+			case CMD_USER_DEL_SEND:
+			{
+				cout  <<  el.first.name << " delete request" << endl;
+				string n = el.first.name;
+				static mutex logRemove_mutex;
+				logRemove_mutex.lock();
+
+				m_clients_log.remove_if([n](pair<string,string> el)
+						{ return (el.first.compare(n)==0);}
+				);
+
+				logRemove_mutex.unlock();
+				packet->cmd = CMD_USER_DEL_RECV;
+				strcpy(packet->name,el.first.name);
+				break;
+			}
+			case CMD_USER_LOG_SEND:
+			{
+				cout  <<  el.first.name << " log request" << endl;
+				string log;
+				for(auto el : m_clients_log)
+				{
+					log += el.first;
+					log += " : ";
+					log += el.second;
+					log += "\n";
+				}
+				packet->cmd = CMD_USER_LOG_RECV;
+				strcpy(packet->data,log.c_str());
+				strcpy(packet->name,el.first.name);
+				break;
+			}
+			default:
+			{
+				break;
+			}
+			}
+			m_sendPool.push(make_pair(packet,el.second));
+			cout << "push" << endl;
+		}
+	}
+}
+
+void Epollserver::thread_write()
+{
+	while(1)
+	{
+		if(!m_sendPool.empty())
+		{
+			cout << "write" << endl;
+			send_mutex.lock();
+
+			pair<Packet*,int> el = m_sendPool.front();
+			m_sendPool.pop();
+
+			send_mutex.unlock();
+			if((write(el.second,(char*)el.first,sizeof(Packet))) < 0)
+			{
+				perror("write");
+			}
+		}
+	}
+}
+
 void Epollserver::socket_wait()
 {
 	while(1)
@@ -193,7 +336,7 @@ void Epollserver::socket_wait()
 			else
 			{
 				int client = m_events[i].data.fd;
-				char buffer[sizeof(Packet) + 6];
+				char buffer[sizeof(Packet)];
 				int n = read(client,buffer,sizeof(buffer));
 				if(n < 0) // 에러
 				{
@@ -214,8 +357,7 @@ void Epollserver::socket_wait()
 				else
 				{
 					packet = (Packet*)buffer;
-					server_read(packet,client);
-					server_write(client);
+					m_requestPool.push(make_pair(*packet,client));
 				}
 			}
 		}

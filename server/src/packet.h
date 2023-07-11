@@ -37,11 +37,9 @@ struct TAIL
 
 struct Packet
 {
-	HEAD;
 	packetCommand cmd;
 	char data[2048];
 	char name[16];
-	TAIL;
 };
 
 
