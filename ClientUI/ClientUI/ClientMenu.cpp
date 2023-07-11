@@ -71,7 +71,6 @@ void ClientMenu::OnBnClickedButton1() // Send Button
 	{
 		Notice.SetWindowText(L"Input Send Data");
 	}
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 }
 
 
@@ -79,15 +78,12 @@ void ClientMenu::OnBnClickedButton2() // Log Button
 {
 	user.send_data(LOG, "");
 	recv_data();
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 }
-
 
 void ClientMenu::OnBnClickedButton3() // Delete Button
 {
 	user.send_data(DEL, "");
 	recv_data();
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 }
 
 

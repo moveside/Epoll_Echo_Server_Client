@@ -4,13 +4,6 @@
 
 #include "client.h"
 
-enum CMD
-{
-	SEND = 1,
-	LOG,
-	DEL,
-	LOGIN
-};
 
 
 
@@ -25,7 +18,6 @@ public:
 	~User();
 
 	bool start();
-	bool send_name(string name);
 
 	void set_name(const char* str);
 	char* get_name();

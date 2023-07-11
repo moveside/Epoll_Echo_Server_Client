@@ -114,11 +114,13 @@ BOOL CClientUIDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
+
 	if (!user.start())
 	{
 		MessageBox(_T("서버 연결 실패"), _T("Connect"), MB_ICONINFORMATION);
 		EndDialog(0);
 	}
+
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
 
@@ -200,7 +202,6 @@ void CClientUIDlg::OnBnClickedButton1()
 	{
 		MessageBox(_T("아이디를 입력하세요"), _T("Login"), MB_ICONINFORMATION);
 	}
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 }
 
 
