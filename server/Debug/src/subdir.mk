@@ -6,16 +6,19 @@
 CPP_SRCS += \
 ../src/EchoServer.cpp \
 ../src/epollserver.cpp \
+../src/ringbuffer.cpp \
 ../src/user.cpp 
 
 CPP_DEPS += \
 ./src/EchoServer.d \
 ./src/epollserver.d \
+./src/ringbuffer.d \
 ./src/user.d 
 
 OBJS += \
 ./src/EchoServer.o \
 ./src/epollserver.o \
+./src/ringbuffer.o \
 ./src/user.o 
 
 
@@ -31,7 +34,7 @@ src/%.o: ../src/%.cpp src/subdir.mk
 clean: clean-src
 
 clean-src:
-	-$(RM) ./src/EchoServer.d ./src/EchoServer.o ./src/epollserver.d ./src/epollserver.o ./src/user.d ./src/user.o
+	-$(RM) ./src/EchoServer.d ./src/EchoServer.o ./src/epollserver.d ./src/epollserver.o ./src/ringbuffer.d ./src/ringbuffer.o ./src/user.d ./src/user.o
 
 .PHONY: clean-src
 

@@ -22,7 +22,13 @@ enum packetCommand
 
 struct HEAD
 {
-	char head[2];
+	char head[3];
+};
+struct RECVBODY
+{
+	packetCommand cmd;
+	char data[30];
+	char name[16];
 };
 struct BODY
 {
@@ -30,17 +36,23 @@ struct BODY
 	char data[2048];
 	char name[16];
 };
+
 struct TAIL
 {
-	char tail[2];
+	char tail[3];
 };
 
 struct Packet
 {
-	packetCommand cmd;
-	char data[2048];
-	char name[16];
+	HEAD head;
+	BODY body;
+	TAIL tail;
 };
-
+struct RECVPacket
+{
+	HEAD head;
+	RECVBODY body;
+	TAIL tail;
+};
 
 #endif /* PACKET_H_ */

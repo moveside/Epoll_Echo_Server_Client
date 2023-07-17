@@ -11,6 +11,7 @@
 
 #include "packet.h"
 #include "user.h"
+#include "ringbuffer.h"
 
 #include<iostream>
 
@@ -36,8 +37,8 @@
 #include <mutex>
 #include <pthread.h>
 #include <memory>
-
-
+#include <condition_variable>
+#include <new>
 
 using namespace std;
 
@@ -57,16 +58,29 @@ private:
 	Packet m_sendPacket;
 
 	unordered_map<int,User*> m_users;
-	list<pair<string,string>> m_clients_log;
 	set<string> m_user_name;
+	list<pair<string,string>> m_clients_log;
+
 
 	vector<thread> threadPool;
 
-	queue <pair<Packet,int>> m_requestPool;
+	queue <pair<RECVBODY*,int>> m_requestPool;
 	queue <pair<Packet*,int>> m_sendPool;
 
+	// thread_read 관련 변수
+	condition_variable cv_request;
 	mutex request_mutex;
+	mutex user_mutex;
+	mutex log_mutex;
+	// thread_send 관련 변수
+	condition_variable cv_send;
 	mutex send_mutex;
+
+	// RingBuffer 관련 변수
+	RingBuffer ringbuffer;
+	condition_variable cv_ringbuffer;
+	mutex ringbuffer_mutex;
+
 public:
 
 	~Epollserver();
@@ -82,6 +96,9 @@ public:
 	void thread_read();
 	void thread_write();
 	void server_write(int clinet_fd);
+	void thread_buffer();
+
+
 };
 
 
