@@ -47,8 +47,8 @@ class Epollserver
 private:
 	const static int Maxevent = 16;
 	const int Port = 10007;
-	const int Count_Readthread = 1;
-	const int Count_Writethread = 1;
+	const int Count_Readthread = 5;
+	const int Count_Writethread = 5;
 
 	int m_sockfd;
 	struct sockaddr_in m_addr;
@@ -64,7 +64,7 @@ private:
 
 	vector<thread> threadPool;
 
-	queue <pair<RECVBODY*,int>> m_requestPool;
+	queue <pair<RECVPacket*,int>> m_requestPool;
 	queue <pair<Packet*,int>> m_sendPool;
 
 	// thread_read 관련 변수
@@ -72,6 +72,7 @@ private:
 	mutex request_mutex;
 	mutex user_mutex;
 	mutex log_mutex;
+	mutex username_mutex;
 	// thread_send 관련 변수
 	condition_variable cv_send;
 	mutex send_mutex;

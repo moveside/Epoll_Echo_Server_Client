@@ -21,7 +21,7 @@ using namespace std;
 class RingBuffer
 {
 private:
-	tuple<char[60],int,int> ringbuffer[500];
+	tuple<char[sizeof(RECVPacket)],int,int> ringbuffer[500];
 	int front;
 	int rear;
 
