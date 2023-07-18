@@ -40,9 +40,10 @@ void ClientMenu::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST1, Log_Data);
 
 	DDX_Text(pDX, IDC_EDIT1, Input_Data);
-	DDV_MaxChars(pDX, Input_Data, 30);
+	DDV_MaxChars(pDX, Input_Data, 29);
 
 
+	DDX_Control(pDX, IDC_LIST2, users_name);
 }
 
 
@@ -81,7 +82,7 @@ void ClientMenu::OnBnClickedButton1() // Send Button
 		p->GetWindowTextW(data);
 		string sdata = CT2CA(data);
 		user.send_data(SEND, sdata);
-		
+		/*
 		for (int i = 1; i <= 5000; i++)
 		{
 			string s = to_string(i);
@@ -91,6 +92,7 @@ void ClientMenu::OnBnClickedButton1() // Send Button
 				test_user[i].send_data(SEND, s);
 			}
 		}
+		*/
 		p->SetWindowTextW(L"");
 	}
 	else
@@ -144,17 +146,6 @@ void ClientMenu::recv_data()
 			CString recv_data(packet.body.data);
 			CString notice_text = recv_data + (CString)" 보냄";
 			Notice.SetWindowText((notice_text));
-			ss[_ttoi(recv_data)] = true;
-			if (recv_data == "10000")
-			{
-				ed = clock();
-				double res = double(ed - st);
-				notice_text = to_string(res).c_str();
-				Notice.SetWindowText((notice_text));
-			}
-			recv_cnt++;
-			notice_text = to_string(recv_cnt).c_str();
-			Notice.SetWindowText((notice_text));
 			break;
 		}
 		case CMD_USER_LOG_RECV:
@@ -174,15 +165,29 @@ void ClientMenu::recv_data()
 					pos = i + 1;
 				}
 			}
-			string result = data.substr(pos);
-			CString cresult(result.c_str());
-			Log_Data.AddString((LPCTSTR)cresult);
 			break;
 		}
 		case CMD_USER_DEL_RECV:
 		{
 			Notice.SetWindowText(L"내 로그 삭제");
 			break;
+		}
+		case CMD_USER_NAME_RECV:
+		{
+			users_name.ResetContent();
+			string data = packet.body.data;
+			int pos = 0;
+			for (int i = 0; i < data.size(); i++)
+			{
+				if (data[i] == '\n')
+				{
+					int len = i - pos;
+					string result = data.substr(pos, len);
+					CString cresult(result.c_str());
+					users_name.AddString((LPCTSTR)cresult);
+					pos = i + 1;
+				}
+			}
 		}
 		default:
 		{
@@ -205,4 +210,24 @@ void ClientMenu::OnBnClickedButton4()
 void ClientMenu::send_dummydata()
 {
 
+}
+
+BOOL ClientMenu::PreTranslateMessage(MSG* pMsg)
+{
+	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (pMsg->wParam == VK_ESCAPE)
+		{
+			// ESC 키 이벤트에 대한 처리 추가
+			return TRUE;
+		}
+		else if (pMsg->wParam == VK_RETURN)
+		{
+			OnBnClickedButton1();
+			// Enter 키 이벤트에 대한 처리 추가
+			return TRUE;
+		}
+	}
+	return CDialogEx::PreTranslateMessage(pMsg);
 }

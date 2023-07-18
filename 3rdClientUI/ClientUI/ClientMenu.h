@@ -54,4 +54,6 @@ public:
 
 	CString Input_Data;
 	afx_msg void OnBnClickedButton4();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	CListBox users_name;
 };

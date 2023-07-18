@@ -92,7 +92,6 @@ bool Client::send_packet(CMD cmd,string data)
 		break;
 	}
 	}
-
 	if ((send(m_sockfd, (char*)&packet, sizeof(packet), 0)) < 0)
 	{
 		return false;

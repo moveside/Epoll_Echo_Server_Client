@@ -72,7 +72,7 @@ void CClientUIDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 
 	DDX_Text(pDX, IDC_EDIT1, input_ID);
-	DDV_MaxChars(pDX, input_ID, 16);
+	DDV_MaxChars(pDX, input_ID, 15);
 }
 
 BEGIN_MESSAGE_MAP(CClientUIDlg, CDialogEx)
@@ -231,3 +231,24 @@ void CClientUIDlg::OnBnClickedCancel()
 }
 
 
+
+
+BOOL CClientUIDlg::PreTranslateMessage(MSG* pMsg)
+{
+	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (pMsg->wParam == VK_ESCAPE)
+		{
+			// ESC 키 이벤트에 대한 처리 추가
+			return TRUE;
+		}
+		else if (pMsg->wParam == VK_RETURN)
+		{
+			OnBnClickedButton1();
+			// Enter 키 이벤트에 대한 처리 추가
+			return TRUE;
+		}
+	}
+	return CDialogEx::PreTranslateMessage(pMsg);
+}
