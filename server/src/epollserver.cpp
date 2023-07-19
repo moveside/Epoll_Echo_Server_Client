@@ -208,8 +208,8 @@ void Epollserver::thread_read()
 
 
 		pair<RECVPacket*, int> el = move(m_requestPool.front());
+		//cout << m_requestPool.front().first->body.data << " " << m_requestPool.back().first->body.data << " read " << m_requestPool.size() << " size" << endl;
 		m_requestPool.pop();
-
 		lock_pop.unlock();
 
 		Packet *packet = new Packet;
@@ -311,9 +311,11 @@ void Epollserver::thread_read()
 		{
 			lock_guard<mutex> lock_push(send_mutex);
 			m_sendPool.push(make_pair(packet, el.second));
+			//cout << m_sendPool.front().first->body.data <<endl;
 		}
 		cv_send.notify_one();
 		usleep(1000);
+		free(el.first);
 	}// while(1)
 }
 
@@ -326,22 +328,35 @@ void Epollserver::thread_write()
 
 		pair<Packet*,int> el = m_sendPool.front();
 		m_sendPool.pop();
-		int n = (write(el.second,(char*)el.first,sizeof(Packet)));
-		while(n < 0)
+		int send_len = 0;
+		while(send_len < sizeof(Packet))
 		{
-			if(errno == EAGAIN)
+			int n = (write(el.second,(char*)el.first+send_len,sizeof(Packet)-send_len));
+			if(n<0) // buffer가 가득차서 못보냄. 기다려야함
 			{
-				cout << "EAGAIN : " << el.first->body.data << " send" << endl;
-				usleep(1000000);
-				n = (write(el.second,(char*)el.first,sizeof(Packet)));
+				if(errno == EAGAIN)
+				{
+					cout << "EAGAIN : " << el.first->body.data << " send" << endl;
+					sleep(1);
+				}
+				else
+				{
+					perror("write");
+				}
 			}
 			else
 			{
-				perror("write");
+				send_len +=n;
+			}
+			if(send_len !=sizeof(Packet) && n > 0) // 보냈지만 일부분만 보냈음. 다시보내야함
+			{
+				cout << "can't send all Packet!!" << " send : " << n << "size" << endl;
 			}
 		}
-		//cout << " send : " << el.first->body.data << endl;
+		if(send_len != sizeof(Packet))
+			cout << "================ERROR=============" << endl;
 		lock.unlock();
+		//cout << " send : " << el.first->body.data << endl;
 		free(el.first);
 		usleep(1000);
 	}
@@ -356,7 +371,8 @@ void Epollserver::thread_buffer()
 				,[this](){return !this->ringbuffer.is_empty();});
 		int st_index;
 		int client;
-		char make_buff[sizeof(RECVPacket)];
+		char* make_buff = new char[sizeof(RECVPacket)];
+		//char make_buff[sizeof(RECVPacket)];
 		while(1)
 		{
 			if(ringbuffer.is_empty()) break;
@@ -428,7 +444,9 @@ void Epollserver::socket_wait()
 				bool can_read = true;
 				while(can_read)
 				{
-					char buffer[sizeof(RECVPacket)];
+					char* buffer = new char[sizeof(RECVPacket)];
+
+					//char buffer[sizeof(RECVPacket)];
 					int n = read(client,buffer,sizeof(RECVPacket));
 					if(n == -1)
 					{
@@ -459,6 +477,7 @@ void Epollserver::socket_wait()
 						cv_ringbuffer.wait(lock_ringbuffer
 								,[this](){return !this->ringbuffer.is_full();}); // ringbuffer가 가득차면 기다린다
 						ringbuffer.enqueue_buffer(buffer,n,client);
+						free(buffer);
 						cv_ringbuffer.notify_one();
 					}
 					usleep(2000);

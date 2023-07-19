@@ -25,7 +25,7 @@ bool RingBuffer::is_empty()
 }
 bool RingBuffer::is_full()
 {
-	if(rear==(front+1)%500) return true;
+	if((rear+1)%500==front) return true;
 	return false;
 }
 int RingBuffer::get_size()
@@ -53,7 +53,9 @@ char* RingBuffer::dequeue_buffer(int start,int size)
 		rear++;
 		rear %=500;
 	}
-	char* result = new char[sizeof(RECVPacket)];
+	char* result;
+	memcpy(result,get<0>(el)+start,size);
+	//char* result = new char[sizeof(RECVPacket)];
 	memcpy(result,get<0>(el)+start,size);
 	return result;
 }
