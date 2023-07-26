@@ -60,10 +60,7 @@ END_MESSAGE_MAP()
 
 void ClientMenu::set_threads()
 {
-	//thread send_thread(&ClientMenu::send_data,this);
 	thread recv_thread(&ClientMenu::recv_data,this);
-
-	//send_thread.detach();
 	recv_thread.detach();
 }
 
@@ -77,13 +74,6 @@ void ClientMenu::OnBnClickedButton1() // Send Button
 		p->GetWindowTextW(data);
 		string sdata = CT2CA(data);
 		user.send_data(SEND, sdata);
-		
-		for (int i = 1; i <= 1000; i++)
-		{
-			string s = to_string(i);
-			user.send_data(SEND, s);
-		}
-		
 		p->SetWindowTextW(L"");
 	}
 	else
@@ -96,19 +86,17 @@ void ClientMenu::OnBnClickedButton1() // Send Button
 void ClientMenu::OnBnClickedButton2() // Log Button
 {
 	user.send_data(LOG, "");
-	//m_requestpool.push(make_pair(LOG, ""));
 }
 
 void ClientMenu::OnBnClickedButton3() // Delete Button
 {
 	user.send_data(DEL, "");
-	//m_requestpool.push(make_pair(DEL, ""));
 }
 
 
 void ClientMenu::OnBnClickedCancel() // Exit Button
 {
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	user.disconnect();
 	CDialogEx::OnCancel();
 }
 
@@ -136,8 +124,7 @@ void ClientMenu::recv_data()
 		{
 			CString recv_data(packet.body.data);
 			CString notice_text = recv_data + (CString)" 보냄";
-			//Notice.SetWindowText((notice_text));
-			//printf("%S\n", recv_data);
+			Notice.SetWindowText((notice_text));
 			break;
 		}
 		case CMD_USER_LOG_RECV:

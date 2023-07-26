@@ -33,3 +33,8 @@ RECVPacket User::recv_data()
 {
 	return client.recv_packet();
 }
+
+void User::disconnect()
+{
+	client.socket_close();
+}

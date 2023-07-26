@@ -25,7 +25,7 @@ public:
 	bool send_data(CMD cmd,string data);
 	RECVPacket recv_data();
 	
-
+	void disconnect();
 };
 
 #endif

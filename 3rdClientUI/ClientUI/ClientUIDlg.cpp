@@ -41,6 +41,8 @@ public:
 // 구현입니다.
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnEnChangeEdit1();
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
@@ -53,6 +55,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+	ON_EN_CHANGE(IDC_EDIT1, &CAboutDlg::OnEnChangeEdit1)
 END_MESSAGE_MAP()
 
 
@@ -228,6 +231,7 @@ void CClientUIDlg::OnBnClickedButton1()
 void CClientUIDlg::OnBnClickedCancel()
 {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	user.disconnect();
 	CDialogEx::OnCancel();
 }
 
@@ -252,4 +256,15 @@ BOOL CClientUIDlg::PreTranslateMessage(MSG* pMsg)
 		}
 	}
 	return CDialogEx::PreTranslateMessage(pMsg);
+}
+
+
+void CAboutDlg::OnEnChangeEdit1()
+{
+	// TODO:  RICHEDIT 컨트롤인 경우, 이 컨트롤은
+	// CDialogEx::OnInitDialog() 함수를 재지정 
+	//하고 마스크에 OR 연산하여 설정된 ENM_CHANGE 플래그를 지정하여 CRichEditCtrl().SetEventMask()를 호출하지 않으면
+	// 이 알림 메시지를 보내지 않습니다.
+
+	// TODO:  여기에 컨트롤 알림 처리기 코드를 추가합니다.
 }

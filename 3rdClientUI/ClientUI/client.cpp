@@ -6,6 +6,7 @@
 
 Client::~Client()
 {
+
 }
 SOCKET Client::get_sockfd()
 {
@@ -47,7 +48,8 @@ bool Client::socket_connect()
 
 void Client::socket_close()
 {
-	closesocket(m_sockfd);
+	shutdown(m_sockfd, SD_SEND);
+	//closesocket(m_sockfd);
 	WSACleanup();
 	exit(0);
 }
