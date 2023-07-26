@@ -11,6 +11,11 @@
 
 Epollserver::~Epollserver()
 {
+	for(auto el : m_users)
+	{
+		epoll_ctl(m_epfd,EPOLL_CTL_DEL,el.first,&m_ev);
+		close(el.first);
+	}
 	cout << "server end" << endl;
 }
 
@@ -190,7 +195,7 @@ void Epollserver::server_read(Packet* packet,int client_fd)
 	}
 	}
 }
-*/
+
 void Epollserver::server_write(int client_fd)
 {
 	if((write(client_fd,(char*)&m_sendPacket,sizeof(m_sendPacket))) < 0)
@@ -198,6 +203,7 @@ void Epollserver::server_write(int client_fd)
 		perror("write");
 	}
 }
+*/
 
 void Epollserver::thread_read()
 {
@@ -208,7 +214,6 @@ void Epollserver::thread_read()
 
 
 		pair<RECVPacket*, int> el = move(m_requestPool.front());
-		//cout << m_requestPool.front().first->body.data << " " << m_requestPool.back().first->body.data << " read " << m_requestPool.size() << " size" << endl;
 		m_requestPool.pop();
 		lock_pop.unlock();
 
@@ -237,12 +242,13 @@ void Epollserver::thread_read()
 		}
 		case CMD_USER_DATA_SEND:
 		{
-			lock_guard<mutex> lock(log_mutex);
-			//cout << el.first->data << " recv by " << el.first->name << endl;
-			m_clients_log.push_back(make_pair(el.first->body.name, el.first->body.data));
-			if (m_clients_log.size() >= 40)
 			{
-				m_clients_log.pop_front();
+				lock_guard<mutex> lock(log_mutex);
+				m_clients_log.push_back(make_pair(el.first->body.name, el.first->body.data));
+				if (m_clients_log.size() >= 40)
+				{
+					m_clients_log.pop_front();
+				}
 			}
 			packet->body.cmd = CMD_USER_DATA_RECV;
 			strcpy(packet->body.data, el.first->body.data);
@@ -251,12 +257,14 @@ void Epollserver::thread_read()
 		}
 		case CMD_USER_DEL_SEND:
 		{
-			lock_guard<mutex> lock(log_mutex);
-			cout << el.first->body.name << " delete request" << endl;
-			string n = el.first->body.name;
+			{
+				lock_guard<mutex> lock(log_mutex);
+				cout << el.first->body.name << " delete request" << endl;
+				string n = el.first->body.name;
 
-			m_clients_log.remove_if([n](pair<string, string> el)
-					{return (el.first.compare(n) == 0);});
+				m_clients_log.remove_if([n](pair<string, string> el)
+						{return (el.first.compare(n) == 0);});
+			}
 			packet->body.cmd = CMD_USER_DEL_RECV;
 			strcpy(packet->body.name, el.first->body.name);
 			break;
@@ -311,7 +319,6 @@ void Epollserver::thread_read()
 		{
 			lock_guard<mutex> lock_push(send_mutex);
 			m_sendPool.push(make_pair(packet, el.second));
-			//cout << m_sendPool.front().first->body.data <<endl;
 		}
 		cv_send.notify_one();
 		usleep(1000);
@@ -328,18 +335,19 @@ void Epollserver::thread_write()
 
 		pair<Packet*,int> el = m_sendPool.front();
 		m_sendPool.pop();
+		lock.unlock();
 		int send_len = 0;
 		while(send_len < sizeof(Packet))
 		{
 			int n = (write(el.second,(char*)el.first+send_len,sizeof(Packet)-send_len));
-			if(n<0) // buffer가 가득차서 못보냄. 기다려야함
+			if(n<0)
 			{
-				if(errno == EAGAIN)
+				if(errno == EAGAIN) // buffer가 가득차서 못보냄. 기다려야함
 				{
 					cout << "EAGAIN : " << el.first->body.data << " send" << endl;
 					sleep(1);
 				}
-				else
+				else // write error
 				{
 					perror("write");
 				}
@@ -355,8 +363,7 @@ void Epollserver::thread_write()
 		}
 		if(send_len != sizeof(Packet))
 			cout << "================ERROR=============" << endl;
-		lock.unlock();
-		//cout << " send : " << el.first->body.data << endl;
+
 		free(el.first);
 		usleep(1000);
 	}
@@ -390,7 +397,7 @@ void Epollserver::thread_buffer()
 		{
 			if(ringbuffer.is_empty()) break;
 			int buff_len = 60;
-			int size = ringbuffer.get_size()-1;
+			int size = ringbuffer.get_size();
 			char* deq_buffer;
 
 			if(buff_len<(size - st_index))
@@ -409,12 +416,13 @@ void Epollserver::thread_buffer()
 			if(buff_len <=0) break;
 		}
 		lock_ringbuffer.unlock();
-		cv_ringbuffer.notify_one();
+		cv_ringbuffer.notify_one(); // ringbuffer에서 하나이상 deq했기 때문에 is_full = false
 		RECVPacket* t = (RECVPacket*)make_buff;
 		if(strcmp(t->head.head,"Aa")!=0 && strcmp(t->tail.tail,"zZ")!=0)
 		{
 			cout << "error Packet!!" << endl;
-		} else
+		}
+		else
 		{
 			lock_guard<mutex> lock(request_mutex);
 			m_requestPool.push(make_pair(t,client));
@@ -445,33 +453,29 @@ void Epollserver::socket_wait()
 				while(can_read)
 				{
 					char* buffer = new char[sizeof(RECVPacket)];
-
-					//char buffer[sizeof(RECVPacket)];
 					int n = read(client,buffer,sizeof(RECVPacket));
-					if(n == -1)
+					if(n <= 0)
 					{
-						if(errno != EAGAIN) // read 에러
+						if(n==-1 && errno == EAGAIN) can_read = false;
+						else // 연결 해제
 						{
-							perror("read");
-						}
-						can_read = false;
-					}
-					else if(n==0) // 연결 해제
-					{
-						can_read = false;
-						lock_guard<mutex> lock(user_mutex);
-						auto findIter = m_users.find(client);
-						if(findIter != m_users.end())
-						{
-							cout << findIter->second->get_name() << " disconnect" << endl;
-							m_user_name.erase(findIter->second->get_name());
-							m_users.erase(findIter);
+							if(n==-1) perror("read");
+							lock_guard<mutex> lock(user_mutex);
+							auto findIter = m_users.find(client);
+							if(findIter != m_users.end())
+							{
+								cout << findIter->second->get_name() << " disconnect" << endl;
+								m_user_name.erase(findIter->second->get_name());
+								m_users.erase(findIter);
+								free(findIter->second);
+							}
 							epoll_ctl(m_epfd,EPOLL_CTL_DEL,client,&m_ev);
-							free(findIter->second);
-							close(client);
+							shutdown(client,SHUT_WR);
+							//close(client);
+							can_read = false;
 						}
 					}
-					else
+					else // read 성공
 					{
 						unique_lock<mutex> lock_ringbuffer(ringbuffer_mutex);
 						cv_ringbuffer.wait(lock_ringbuffer

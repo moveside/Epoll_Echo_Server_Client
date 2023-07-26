@@ -39,7 +39,7 @@
 #include <memory>
 #include <condition_variable>
 #include <new>
-
+#include <time.h>
 using namespace std;
 
 class Epollserver
@@ -98,8 +98,6 @@ public:
 	void thread_write();
 	void server_write(int clinet_fd);
 	void thread_buffer();
-
-
 };
 
 

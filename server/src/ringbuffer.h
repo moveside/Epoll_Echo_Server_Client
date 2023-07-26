@@ -33,7 +33,7 @@ public:
 	bool is_empty();
 	bool is_full();
 
-	void enqueue_buffer(char* data,int n,int client);
+	void enqueue_buffer(char* data,int size,int client);
 	char* dequeue_buffer(int start,int end);
 
 	int find_str(char* data);

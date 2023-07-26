@@ -37,10 +37,10 @@ int RingBuffer::get_client()
 {
 	return get<2>(ringbuffer[rear]);
 }
-void RingBuffer::enqueue_buffer(char* data,int n,int client)
+void RingBuffer::enqueue_buffer(char* data,int size,int client)
 {
-	memcpy(get<0>(ringbuffer[front]),data,n);
-	get<1>(ringbuffer[front]) = n;
+	memcpy(get<0>(ringbuffer[front]),data,size);
+	get<1>(ringbuffer[front]) = size;
 	get<2>(ringbuffer[front]) = client;
 	front++;
 	front %= 500;
@@ -54,8 +54,6 @@ char* RingBuffer::dequeue_buffer(int start,int size)
 		rear %=500;
 	}
 	char* result;
-	memcpy(result,get<0>(el)+start,size);
-	//char* result = new char[sizeof(RECVPacket)];
 	memcpy(result,get<0>(el)+start,size);
 	return result;
 }
