@@ -99,14 +99,32 @@ bool Client::send_packet(CMD cmd,string data)
 	return true;
 }
 
+
+
 RECVPacket Client::recv_packet()
 {
-	string buff;
 	char buffer[sizeof(RECVPacket)];
-	if (recv(m_sockfd, buffer, sizeof(buffer), 0) <0)
+	char make_buff[sizeof(RECVPacket)];
+	RECVPacket* packet = nullptr;
+	int len = 0;
+	int n = recv(m_sockfd, buffer, sizeof(buffer), 0);
+	if (n < 0)
 	{
 		cout << "recv error" << endl;
+		return *packet;
 	}
-	RECVPacket* packet = (RECVPacket*)buffer;
+	memcpy(make_buff, buffer, n);
+	int recv_len = n;
+	while (recv_len < sizeof(RECVPacket))
+	{
+		cout << "can't recv all Packet" << endl;
+		char tmp_buffer[sizeof(RECVPacket)];
+		n = recv(m_sockfd, tmp_buffer, sizeof(RECVPacket)-recv_len, 0);
+		memcpy(make_buff + recv_len, tmp_buffer, n);
+		recv_len += n;
+		cout << recv_len << endl;
+	}
+	if (recv_len != sizeof(RECVPacket)) cout << "===========ERROR==========" << endl;
+	packet = (RECVPacket*)make_buff;
 	return *packet;
 }

@@ -11,10 +11,7 @@
 // ClientMenu 대화 상자
 
 extern User user;
-extern User test_user[5];
-clock_t st, ed;
-int recv_cnt;
-bool ss[6000];
+
 IMPLEMENT_DYNAMIC(ClientMenu, CDialogEx)
 
 ClientMenu::ClientMenu(CWnd* pParent /*=nullptr*/)
@@ -73,8 +70,6 @@ void ClientMenu::set_threads()
 
 void ClientMenu::OnBnClickedButton1() // Send Button
 {
-	recv_cnt = 0;
-	st = clock();
 	CEdit* p = (CEdit*)GetDlgItem(IDC_EDIT1);
 	if (p->GetWindowTextLengthW() > 0)
 	{
@@ -82,17 +77,13 @@ void ClientMenu::OnBnClickedButton1() // Send Button
 		p->GetWindowTextW(data);
 		string sdata = CT2CA(data);
 		user.send_data(SEND, sdata);
-		/*
-		for (int i = 1; i <= 5000; i++)
+		
+		for (int i = 1; i <= 1000; i++)
 		{
 			string s = to_string(i);
 			user.send_data(SEND, s);
-			for (int i = 10; i < 5; i++)
-			{
-				test_user[i].send_data(SEND, s);
-			}
 		}
-		*/
+		
 		p->SetWindowTextW(L"");
 	}
 	else
@@ -145,7 +136,8 @@ void ClientMenu::recv_data()
 		{
 			CString recv_data(packet.body.data);
 			CString notice_text = recv_data + (CString)" 보냄";
-			Notice.SetWindowText((notice_text));
+			//Notice.SetWindowText((notice_text));
+			//printf("%S\n", recv_data);
 			break;
 		}
 		case CMD_USER_LOG_RECV:

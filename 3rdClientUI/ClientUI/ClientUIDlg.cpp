@@ -199,13 +199,14 @@ void CClientUIDlg::OnBnClickedButton1()
 		if (packet.body.cmd == CMD_USER_LOGIN_RECV && packet.body.data[0]=='1')
 		{
 			//테스트 유저
+			/*
 			for (int i = 0; i < 5; i++)
 			{
 				string id_data = "testuser" + to_string(i);
 				test_user[i].send_data(LOGIN, id_data);
 				RECVPacket dummy_packet = test_user[i].recv_data();
 			}
-			
+			*/
 			MessageBox(_T("로그인 성공"), _T("Login"), MB_ICONINFORMATION);
 			user.set_name(sinput_ID.c_str());
 			EndDialog(0);
