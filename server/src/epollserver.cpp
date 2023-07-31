@@ -226,7 +226,8 @@ void Epollserver::thread_read()
 			if (m_user_name.find(el.first->body.name) != m_user_name.end()) // 로그인 실패
 			{
 				packet->body.data[0] = '0';
-			} else // 성공
+			}
+			else // 성공
 			{
 				User *user = new User(el.first->body.name, el.second);
 
@@ -245,7 +246,7 @@ void Epollserver::thread_read()
 			{
 				lock_guard<mutex> lock(log_mutex);
 				m_clients_log.push_back(make_pair(el.first->body.name, el.first->body.data));
-				if (m_clients_log.size() >= 40)
+				if (m_clients_log.size() > 40)
 				{
 					m_clients_log.pop_front();
 				}
@@ -362,7 +363,9 @@ void Epollserver::thread_write()
 			}
 		}
 		if(send_len != sizeof(Packet))
+		{
 			cout << "================ERROR=============" << endl;
+		}
 
 		free(el.first);
 		usleep(1000);
@@ -379,7 +382,6 @@ void Epollserver::thread_buffer()
 		int st_index;
 		int client;
 		char* make_buff = new char[sizeof(RECVPacket)];
-		//char make_buff[sizeof(RECVPacket)];
 		while(1)
 		{
 			if(ringbuffer.is_empty()) break;
@@ -396,20 +398,20 @@ void Epollserver::thread_buffer()
 		while(1)
 		{
 			if(ringbuffer.is_empty()) break;
-			int buff_len = 60;
-			int size = ringbuffer.get_size();
+			int buff_len = sizeof(RECVPacket);
+			int size = ringbuffer.get_size() - st_index;
 			char* deq_buffer;
 
-			if(buff_len<(size - st_index))
+			if(buff_len > size)
 			{
-				deq_buffer = ringbuffer.dequeue_buffer(st_index, size-st_index);
-				memcpy(make_buff+(60-buff_len),deq_buffer,size-st_index);
-				buff_len -= (size-st_index);
+				deq_buffer = ringbuffer.dequeue_buffer(st_index, size);
+				memcpy(make_buff+(sizeof(RECVPacket)-buff_len),deq_buffer,size);
+				buff_len -= (size);
 			}
 			else
 			{
 				deq_buffer = ringbuffer.dequeue_buffer(st_index, buff_len);
-				memcpy(make_buff+(60-buff_len),deq_buffer,buff_len);
+				memcpy(make_buff+(sizeof(RECVPacket)-buff_len),deq_buffer,buff_len);
 				buff_len = 0;
 			}
 			st_index = 0;

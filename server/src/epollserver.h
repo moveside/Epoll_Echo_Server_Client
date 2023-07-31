@@ -38,7 +38,6 @@
 #include <pthread.h>
 #include <memory>
 #include <condition_variable>
-#include <new>
 #include <time.h>
 using namespace std;
 
