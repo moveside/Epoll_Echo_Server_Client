@@ -212,69 +212,71 @@ void Epollserver::thread_read()
 		unique_lock<mutex> lock_pop(request_mutex);
 		cv_request.wait(lock_pop, [this]() {return !this->m_requestPool.empty();});
 
-
-		pair<RECVPacket*, int> el = move(m_requestPool.front());
+		pair<COMBODY*, int> el = move(m_requestPool.front());
 		m_requestPool.pop();
 		lock_pop.unlock();
-
+		unique_lock<mutex> lock_user(user_mutex);
+		auto findIter = m_users.find(el.second);
+		lock_user.unlock();
 		Packet *packet = new Packet;
-		switch (el.first->body.cmd)
+		switch (el.first->cmd)
 		{
 		case CMD_USER_LOGIN_SEND:
 		{
 			lock_guard<mutex> lock(user_mutex);
-			if (m_user_name.find(el.first->body.name) != m_user_name.end()) // 로그인 실패
+			if (m_user_name.find(el.first->data) != m_user_name.end()) // 로그인 실패
 			{
 				packet->body.data[0] = '0';
 			}
 			else // 성공
 			{
-				User *user = new User(el.first->body.name, el.second);
+				User *user = new User(el.first->data, el.second);
 
 				m_users.insert(make_pair(el.second, user));
-				m_user_name.insert(el.first->body.name);
+				m_user_name.insert(el.first->data);
 
 				cout << user->get_name() << " Login thread" << endl;
 				packet->body.data[0] = '1';
 			}
+			packet->head.dataSize = 1;
 			packet->body.cmd = CMD_USER_LOGIN_RECV;
-			strcpy(packet->body.name, el.first->body.name);
 			break;
 		}
 		case CMD_USER_DATA_SEND:
 		{
 			{
 				lock_guard<mutex> lock(log_mutex);
-				m_clients_log.push_back(make_pair(el.first->body.name, el.first->body.data));
+				m_clients_log.push_back(make_pair(findIter->second->get_name(), el.first->data));
 				if (m_clients_log.size() > 40)
 				{
 					m_clients_log.pop_front();
 				}
 			}
 			packet->body.cmd = CMD_USER_DATA_RECV;
-			strcpy(packet->body.data, el.first->body.data);
-			strcpy(packet->body.name, el.first->body.name);
+			strcpy(packet->body.data, el.first->data);
+			packet->head.dataSize = strlen(el.first->data);
+			cout << packet->head.dataSize << endl;
 			break;
 		}
 		case CMD_USER_DEL_SEND:
 		{
 			{
 				lock_guard<mutex> lock(log_mutex);
-				cout << el.first->body.name << " delete request" << endl;
-				string n = el.first->body.name;
+				cout << findIter->second->get_name() << " delete request" << endl;
+				string n = findIter->second->get_name();
 
 				m_clients_log.remove_if([n](pair<string, string> el)
 						{return (el.first.compare(n) == 0);});
 			}
+			packet->head.dataSize = 0;
 			packet->body.cmd = CMD_USER_DEL_RECV;
-			strcpy(packet->body.name, el.first->body.name);
 			break;
 		}
 		case CMD_USER_LOG_SEND:
 		{
 			{
 				lock_guard<mutex> lock(log_mutex);
-				cout << el.first->body.name << " log request" << endl;
+				cout << findIter->second->get_name() << " log request" << endl;
 				string log;
 				for (auto el : m_clients_log)
 				{
@@ -283,9 +285,9 @@ void Epollserver::thread_read()
 					log += el.second;
 					log += "\n";
 				}
+				packet->head.dataSize = log.size();
 				packet->body.cmd = CMD_USER_LOG_RECV;
 				strcpy(packet->body.data, log.c_str());
-				strcpy(packet->body.name, el.first->body.name);
 			}
 			{
 				Packet *namePacket = new Packet;
@@ -297,8 +299,8 @@ void Epollserver::thread_read()
 					name += "\n";
 				}
 				namePacket->body.cmd = CMD_USER_NAME_RECV;
+				namePacket->head.dataSize = name.size();
 				strcpy(namePacket->body.data, name.c_str());
-				strcpy(namePacket->body.name, el.first->body.name);
 				strcpy(namePacket->head.head,"Aa");
 				strcpy(namePacket->tail.tail,"zZ");
 				{
@@ -379,13 +381,17 @@ void Epollserver::thread_buffer()
 		unique_lock<mutex> lock_ringbuffer(ringbuffer_mutex);
 		cv_ringbuffer.wait(lock_ringbuffer
 				,[this](){return !this->ringbuffer.is_empty();});
-		int st_index;
+
 		int client;
-		char* make_buff = new char[sizeof(RECVPacket)];
+		COMBODY* body = ringbuffer.combine_Packet(client);
+		/*
 		while(1)
 		{
 			if(ringbuffer.is_empty()) break;
-			if((st_index = (ringbuffer.find_str("Aa"))) >=0)
+			auto el = ringbuffer.find_head();
+			index = el.first;
+			packetDataSize = el.second;
+			if(index >=0)
 			{
 				client = ringbuffer.get_client();
 				break;
@@ -395,10 +401,13 @@ void Epollserver::thread_buffer()
 				ringbuffer.dequeue_buffer(0, ringbuffer.get_size());
 			}
 		}
-		while(1)
-		{
-			if(ringbuffer.is_empty()) break;
-			int buff_len = sizeof(RECVPacket);
+			// body 추출
+		index += sizeof(HEAD);
+		COMBODY *B = ringbuffer.find_body(index,packetDataSize);
+		index += sizeof(BODY);
+		TAIL *T = (TAIL*)ringbuffer.dequeue_buffer(index, sizeof(TAIL));
+
+			int buff_len = sizeof(int) + packetDataSize;
 			int size = ringbuffer.get_size() - st_index;
 			char* deq_buffer;
 
@@ -414,20 +423,18 @@ void Epollserver::thread_buffer()
 				memcpy(make_buff+(sizeof(RECVPacket)-buff_len),deq_buffer,buff_len);
 				buff_len = 0;
 			}
-			st_index = 0;
-			if(buff_len <=0) break;
-		}
+		*/
+
 		lock_ringbuffer.unlock();
 		cv_ringbuffer.notify_one(); // ringbuffer에서 하나이상 deq했기 때문에 is_full = false
-		RECVPacket* t = (RECVPacket*)make_buff;
-		if(strcmp(t->head.head,"Aa")!=0 && strcmp(t->tail.tail,"zZ")!=0)
+		if(body == nullptr)
 		{
 			cout << "error Packet!!" << endl;
 		}
 		else
 		{
 			lock_guard<mutex> lock(request_mutex);
-			m_requestPool.push(make_pair(t,client));
+			m_requestPool.push(make_pair(body,client));
 		}
 		cv_request.notify_one(); // 스레드 하나를 깨운다.
 		usleep(1000);
@@ -454,8 +461,8 @@ void Epollserver::socket_wait()
 				bool can_read = true;
 				while(can_read)
 				{
-					char* buffer = new char[sizeof(RECVPacket)];
-					int n = read(client,buffer,sizeof(RECVPacket));
+					char read_packet[sizeof(Packet)];
+					int n = read(client,read_packet,sizeof(Packet));
 					if(n <= 0)
 					{
 						if(n==-1 && errno == EAGAIN) can_read = false;
@@ -482,8 +489,7 @@ void Epollserver::socket_wait()
 						unique_lock<mutex> lock_ringbuffer(ringbuffer_mutex);
 						cv_ringbuffer.wait(lock_ringbuffer
 								,[this](){return !this->ringbuffer.is_full();}); // ringbuffer가 가득차면 기다린다
-						ringbuffer.enqueue_buffer(buffer,n,client);
-						free(buffer);
+						ringbuffer.enqueue_buffer(read_packet,n,client);
 						cv_ringbuffer.notify_one();
 					}
 					usleep(2000);

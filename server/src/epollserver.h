@@ -63,7 +63,7 @@ private:
 
 	vector<thread> threadPool;
 
-	queue <pair<RECVPacket*,int>> m_requestPool;
+	queue <pair<COMBODY*,int>> m_requestPool;
 	queue <pair<Packet*,int>> m_sendPool;
 
 	// thread_read 관련 변수

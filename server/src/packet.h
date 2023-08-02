@@ -21,9 +21,12 @@ enum packetCommand
   CMD_USER_NAME_RECV
 };
 
+#pragma pack(push,1)
+
 struct HEAD
 {
 	char head[3];
+	int dataSize;
 };
 struct RECVBODY
 {
@@ -35,9 +38,12 @@ struct BODY
 {
 	packetCommand cmd;
 	char data[2048];
-	char name[16];
 };
-
+struct COMBODY
+{
+	packetCommand cmd;
+	char* data;
+};
 struct TAIL
 {
 	char tail[3];
@@ -55,5 +61,7 @@ struct RECVPacket
 	RECVBODY body;
 	TAIL tail;
 };
+
+#pragma pack(pop)
 
 #endif /* PACKET_H_ */
