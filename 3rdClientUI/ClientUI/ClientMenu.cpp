@@ -100,6 +100,7 @@ void ClientMenu::OnBnClickedCancel() // Exit Button
 	CDialogEx::OnCancel();
 }
 
+/*
 void ClientMenu::send_data()
 {
 	while (1)
@@ -112,12 +113,13 @@ void ClientMenu::send_data()
 		}
 	}
 }
+*/
 
 void ClientMenu::recv_data()
 {
 	while (1)
 	{
-		RECVPacket packet = user.recv_data();
+		Packet packet = user.recv_data();
 		switch (packet.body.cmd)
 		{
 		case CMD_USER_DATA_RECV:
@@ -125,6 +127,7 @@ void ClientMenu::recv_data()
 			CString recv_data(packet.body.data);
 			CString notice_text = recv_data + (CString)" 보냄";
 			Notice.SetWindowText((notice_text));
+			cout << packet.body.data << endl;
 			break;
 		}
 		case CMD_USER_LOG_RECV:

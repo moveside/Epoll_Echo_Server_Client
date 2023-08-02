@@ -126,7 +126,8 @@ BOOL CClientUIDlg::OnInitDialog()
 		EndDialog(0);
 	}
 	// 테스트 유저
-	for (int i = 10; i < 5; i++)
+	/*
+	for (int i = 0; i < 5; i++)
 	{
 		if (!test_user[i].start())
 		{
@@ -134,7 +135,7 @@ BOOL CClientUIDlg::OnInitDialog()
 			EndDialog(0);
 		}
 	}
-
+	*/
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
 
@@ -198,7 +199,7 @@ void CClientUIDlg::OnBnClickedButton1()
 		p->GetWindowTextW(cinput_ID);
 		string sinput_ID = CT2CA(cinput_ID);
 		user.send_data(LOGIN, sinput_ID);
-		RECVPacket packet = user.recv_data();
+		Packet packet = user.recv_data();
 		if (packet.body.cmd == CMD_USER_LOGIN_RECV && packet.body.data[0]=='1')
 		{
 			//테스트 유저

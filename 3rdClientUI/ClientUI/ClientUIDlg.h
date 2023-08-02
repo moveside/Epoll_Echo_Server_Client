@@ -1,7 +1,7 @@
 ﻿
 // ClientUIDlg.h: 헤더 파일
 //
-//#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
+#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
 #pragma once
 
 

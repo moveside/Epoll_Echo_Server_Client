@@ -65,27 +65,29 @@ bool Client::send_packet(CMD cmd,string data)
 	{
 		packet.body.cmd = CMD_USER_LOGIN_SEND;
 		strcpy(m_name, data.c_str());
-		strcpy(packet.body.data, m_name);
-		strcpy(packet.body.name, m_name);
+		strcpy(packet.body.data, data.c_str());
+		packet.head.dataSize = data.size();
+		cout << packet.head.dataSize << endl;
 		break;
 	}
 	case SEND:
 	{
 		packet.body.cmd = CMD_USER_DATA_SEND;
 		strcpy(packet.body.data, data.c_str());
-		strcpy(packet.body.name, m_name);
+		packet.head.dataSize = data.size();
+		cout << packet.head.dataSize << endl;
 		break;
 	}
 	case LOG:
 	{
+		packet.head.dataSize = 0;
 		packet.body.cmd = CMD_USER_LOG_SEND;
-		strcpy(packet.body.name, m_name);
 		break;
 	}
 	case DEL:
 	{
+		packet.head.dataSize = 0;
 		packet.body.cmd = CMD_USER_DEL_SEND;
-		strcpy(packet.body.name, m_name);
 		break;
 	}
 
@@ -94,20 +96,22 @@ bool Client::send_packet(CMD cmd,string data)
 		break;
 	}
 	}
-	if ((send(m_sockfd, (char*)&packet, sizeof(packet), 0)) < 0)
+	int n = send(m_sockfd, (char*)&packet, sizeof(packet), 0);
+	if (n  < 0)
 	{
 		return false;
 	}
+	 // cout << "send " << n << "size      " << endl;
 	return true;
 }
 
 
 
-RECVPacket Client::recv_packet()
+Packet Client::recv_packet()
 {
-	char buffer[sizeof(RECVPacket)];
-	char make_buff[sizeof(RECVPacket)];
-	RECVPacket* packet = nullptr;
+	char buffer[sizeof(Packet)];
+	char make_buff[sizeof(Packet)];
+	Packet* packet = nullptr;
 	int len = 0;
 	int n = recv(m_sockfd, buffer, sizeof(buffer), 0);
 	if (n < 0)
@@ -117,16 +121,18 @@ RECVPacket Client::recv_packet()
 	}
 	memcpy(make_buff, buffer, n);
 	int recv_len = n;
-	while (recv_len < sizeof(RECVPacket))
+	while (recv_len < sizeof(Packet))
 	{
 		cout << "can't recv all Packet" << endl;
-		char tmp_buffer[sizeof(RECVPacket)];
-		n = recv(m_sockfd, tmp_buffer, sizeof(RECVPacket)-recv_len, 0);
+		char tmp_buffer[sizeof(Packet)];
+		n = recv(m_sockfd, tmp_buffer, sizeof(Packet)-recv_len, 0);
 		memcpy(make_buff + recv_len, tmp_buffer, n);
 		recv_len += n;
 		cout << recv_len << endl;
 	}
-	if (recv_len != sizeof(RECVPacket)) cout << "===========ERROR==========" << endl;
-	packet = (RECVPacket*)make_buff;
+	if (recv_len != sizeof(Packet)) cout << "===========ERROR==========" << endl;
+	packet = (Packet*)make_buff;
 	return *packet;
 }
+
+	

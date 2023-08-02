@@ -18,22 +18,27 @@ enum packetCommand
 	CMD_USER_LOG_RECV,
 	CMD_USER_NAME_RECV
 };
+enum CMD
+{
+	SEND = 1,
+	LOG,
+	DEL,
+	LOGIN
+};
+
+#pragma pack(push,1)
+
 struct HEAD
 {
 	char head[3];
+	int dataSize;
 };
 struct BODY
 {
 	packetCommand cmd;
-	char data[30];
-	char name[16];
-};
-struct RECVBODY
-{
-	packetCommand cmd;
 	char data[2048];
-	char name[16];
 };
+
 struct TAIL
 {
 	char tail[3];
@@ -45,20 +50,8 @@ struct Packet
 	BODY body;
 	TAIL tail;
 };
-struct RECVPacket
-{
-	HEAD head;
-	RECVBODY body;
-	TAIL tail;
-};
 
-enum CMD
-{
-	SEND = 1,
-	LOG,
-	DEL,
-	LOGIN
-};
+#pragma pack(pop)
 
 
 #endif // !PACKET_H_
