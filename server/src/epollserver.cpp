@@ -13,10 +13,11 @@ Epollserver::~Epollserver()
 {
 	for(auto el : m_users)
 	{
+		cout << el.second->get_name() << "close" << endl;
 		epoll_ctl(m_epfd,EPOLL_CTL_DEL,el.first,&m_ev);
+		// shutdown(el.first,SHUT_WR);
 		close(el.first);
 	}
-	cout << "server end" << endl;
 }
 
 
@@ -122,88 +123,6 @@ void Epollserver::client_connect()
 	cout << "connect success" << endl;
 }
 
-/*
-void Epollserver::server_read(Packet* packet,int client_fd)
-{
-	memset(&m_sendPacket,0,sizeof(m_sendPacket));
-	switch(packet->body.cmd)
-	{
-	case CMD_USER_LOGIN_SEND:
-	{
-		if(m_user_name.find(packet->body.name) != m_user_name.end()) // 로그인 실패
-		{
-			m_sendPacket.body.data[0]='0';
-		}
-		else // 성공
-		{
-			User *user = new User(packet->name,client_fd);
-			m_users.insert(make_pair(client_fd,user));
-			m_user_name.insert(packet->name);
-			cout << user->get_name() << " Login" << endl;
-			m_sendPacket.data[0]='1';
-		}
-		m_sendPacket.cmd = CMD_USER_LOGIN_RECV;
-
-		break;
-	}
-	case CMD_USER_DATA_SEND:
-	{
-		cout << packet->data << " recv by " <<  packet->name <<endl;
-
-		string h = packet->name;
-		m_clients_log.push_back(make_pair(packet->name,packet->data));
-
-		if(m_clients_log.size()>=40)
-		{
-			m_clients_log.pop_front();
-		}
-		m_sendPacket.cmd = CMD_USER_DATA_RECV;
-		strcpy(m_sendPacket.data,packet->data);
-		strcpy(m_sendPacket.name,packet->name);
-		break;
-	}
-	case CMD_USER_DEL_SEND:
-	{
-		cout  <<  packet->name << " delete request" << endl;
-		string n = packet->name;
-		m_clients_log.remove_if([n](pair<string,string> el)
-				{ return (el.first.compare(n)==0);}
-		);
-
-		m_sendPacket.cmd = CMD_USER_DEL_RECV;
-		break;
-	}
-	case CMD_USER_LOG_SEND:
-	{
-		cout  <<  packet->name << " log request" << endl;
-		string log;
-		for(auto el : m_clients_log)
-		{
-			log += el.first;
-			log += " : ";
-			log += el.second;
-			log += "\n";
-		}
-		m_sendPacket.cmd = CMD_USER_LOG_RECV;
-		strcpy(m_sendPacket.data,log.c_str());
-		strcpy(m_sendPacket.name,packet->name);
-		break;
-	}
-	default:
-	{
-		break;
-	}
-	}
-}
-
-void Epollserver::server_write(int client_fd)
-{
-	if((write(client_fd,(char*)&m_sendPacket,sizeof(m_sendPacket))) < 0)
-	{
-		perror("write");
-	}
-}
-*/
 
 void Epollserver::thread_read()
 {
@@ -255,7 +174,6 @@ void Epollserver::thread_read()
 			packet->body.cmd = CMD_USER_DATA_RECV;
 			strcpy(packet->body.data, el.first->data);
 			packet->head.dataSize = strlen(el.first->data);
-			cout << packet->head.dataSize << endl;
 			break;
 		}
 		case CMD_USER_DEL_SEND:
@@ -324,8 +242,9 @@ void Epollserver::thread_read()
 			m_sendPool.push(make_pair(packet, el.second));
 		}
 		cv_send.notify_one();
+		delete el.first->data;
+		delete el.first;
 		usleep(1000);
-		free(el.first);
 	}// while(1)
 }
 
@@ -369,7 +288,7 @@ void Epollserver::thread_write()
 			cout << "================ERROR=============" << endl;
 		}
 
-		free(el.first);
+		delete el.first;
 		usleep(1000);
 	}
 }
@@ -384,49 +303,8 @@ void Epollserver::thread_buffer()
 
 		int client;
 		COMBODY* body = ringbuffer.combine_Packet(client);
-		/*
-		while(1)
-		{
-			if(ringbuffer.is_empty()) break;
-			auto el = ringbuffer.find_head();
-			index = el.first;
-			packetDataSize = el.second;
-			if(index >=0)
-			{
-				client = ringbuffer.get_client();
-				break;
-			}
-			else
-			{
-				ringbuffer.dequeue_buffer(0, ringbuffer.get_size());
-			}
-		}
-			// body 추출
-		index += sizeof(HEAD);
-		COMBODY *B = ringbuffer.find_body(index,packetDataSize);
-		index += sizeof(BODY);
-		TAIL *T = (TAIL*)ringbuffer.dequeue_buffer(index, sizeof(TAIL));
-
-			int buff_len = sizeof(int) + packetDataSize;
-			int size = ringbuffer.get_size() - st_index;
-			char* deq_buffer;
-
-			if(buff_len > size)
-			{
-				deq_buffer = ringbuffer.dequeue_buffer(st_index, size);
-				memcpy(make_buff+(sizeof(RECVPacket)-buff_len),deq_buffer,size);
-				buff_len -= (size);
-			}
-			else
-			{
-				deq_buffer = ringbuffer.dequeue_buffer(st_index, buff_len);
-				memcpy(make_buff+(sizeof(RECVPacket)-buff_len),deq_buffer,buff_len);
-				buff_len = 0;
-			}
-		*/
-
 		lock_ringbuffer.unlock();
-		cv_ringbuffer.notify_one(); // ringbuffer에서 하나이상 deq했기 때문에 is_full = false
+		cv_ringbuffer.notify_one();
 		if(body == nullptr)
 		{
 			cout << "error Packet!!" << endl;
@@ -436,7 +314,7 @@ void Epollserver::thread_buffer()
 			lock_guard<mutex> lock(request_mutex);
 			m_requestPool.push(make_pair(body,client));
 		}
-		cv_request.notify_one(); // 스레드 하나를 깨운다.
+		cv_request.notify_one();
 		usleep(1000);
 	}// while(1)
 }

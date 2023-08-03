@@ -28,22 +28,12 @@ struct HEAD
 	char head[3];
 	int dataSize;
 };
-struct RECVBODY
-{
-	packetCommand cmd;
-	char data[30];
-	char name[16];
-};
 struct BODY
 {
 	packetCommand cmd;
 	char data[2048];
 };
-struct COMBODY
-{
-	packetCommand cmd;
-	char* data;
-};
+
 struct TAIL
 {
 	char tail[3];
@@ -55,11 +45,11 @@ struct Packet
 	BODY body;
 	TAIL tail;
 };
-struct RECVPacket
+
+struct COMBODY
 {
-	HEAD head;
-	RECVBODY body;
-	TAIL tail;
+	packetCommand cmd;
+	char* data;
 };
 
 #pragma pack(pop)

@@ -48,7 +48,7 @@ void RingBuffer::enqueue_buffer(char* data,int size,int client)
 char* RingBuffer::dequeue_buffer(int& start,int size)
 {
 	char* result = new char[size+1];
-	if(start >= get_size()) start = start % get_size();
+	if(start >= get_size()) start %= get_size();
 	int index = start;
 	int deq_size = size;
 	while(deq_size > 0)
@@ -65,7 +65,7 @@ char* RingBuffer::dequeue_buffer(int& start,int size)
 		}
 		else
 		{
-			memcpy(result+(size - deq_size),get<0>(el)+index,deq_size);
+			memcpy(result+(size - deq_size),get<0>(el)+index,deq_size+1);
 			if(deq_size == max_deq)
 			{
 				rear++;
@@ -124,18 +124,17 @@ COMBODY* RingBuffer::find_body(int start,int size)
 {
 	// cmd 추출
 	COMBODY* body = new COMBODY;
-	char result[sizeof(int)];
 	int index = start;
 	auto el = ringbuffer[rear];
-	memcpy(result,get<0>(el) + index,1);
 	body->cmd = static_cast<packetCommand>(get<0>(el)[index]);
 	// data 추출
-	index += sizeof(int);
+	index += sizeof(packetCommand);
 	int deq_size = size;
 	char* bodyData = dequeue_buffer(index,deq_size);
 	body->data = bodyData;
 	return body;
 }
+
 
 COMBODY* RingBuffer::combine_Packet(int &client)
 {
@@ -158,19 +157,19 @@ COMBODY* RingBuffer::combine_Packet(int &client)
 	HEAD* head = (HEAD*)dequeue_buffer(index,sizeof(HEAD));
 	index += sizeof(HEAD);
 	COMBODY* body = find_body(index,head->dataSize);
-	//COMBODY* body = (COMBODY*)dequeue_buffer(index,head->dataSize);
 	index += sizeof(BODY);
 	TAIL* tail = (TAIL*)dequeue_buffer(index,sizeof(TAIL));
 	if(strcmp(head->head,"Aa") == 0 && strcmp(tail->tail,"zZ")==0)
 	{
-		free(head);
-		free(tail);
+		delete head;
+		delete tail;
 		return body;
 	}
 	else
 	{
-		free(head);
-		free(tail);
+		delete head;
+		delete tail;
+		delete body;
 		return nullptr;
 	}
 }

@@ -92,10 +92,8 @@ public:
 	void client_connect();
 	void socket_wait();
 	void set_threadPool();
-	void server_read(Packet* packet,int client_fd);
 	void thread_read();
 	void thread_write();
-	void server_write(int clinet_fd);
 	void thread_buffer();
 };
 
