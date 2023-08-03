@@ -29,7 +29,7 @@ bool User::send_data(CMD cmd, string data)
 	return client.send_packet(cmd, data);
 }
 
-Packet User::recv_data()
+Packet* User::recv_data()
 {
 	return client.recv_packet();
 }

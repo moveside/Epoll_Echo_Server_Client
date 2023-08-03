@@ -199,8 +199,13 @@ void CClientUIDlg::OnBnClickedButton1()
 		p->GetWindowTextW(cinput_ID);
 		string sinput_ID = CT2CA(cinput_ID);
 		user.send_data(LOGIN, sinput_ID);
-		Packet packet = user.recv_data();
-		if (packet.body.cmd == CMD_USER_LOGIN_RECV && packet.body.data[0]=='1')
+		Packet* packet = user.recv_data();
+		if (packet == nullptr)
+		{
+			MessageBox(_T("응답 실패"), _T("Login"), MB_ICONINFORMATION);
+			user.disconnect();
+		}
+		if (packet->body.cmd == CMD_USER_LOGIN_RECV && packet->body.data[0]=='1')
 		{
 			//테스트 유저
 			/*

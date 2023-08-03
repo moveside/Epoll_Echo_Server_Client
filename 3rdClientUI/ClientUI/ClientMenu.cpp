@@ -75,6 +75,13 @@ void ClientMenu::OnBnClickedButton1() // Send Button
 		string sdata = CT2CA(data);
 		user.send_data(SEND, sdata);
 		p->SetWindowTextW(L"");
+		/*
+		for (int i = 1; i <= 5000; i++)
+		{
+			string idata = to_string(i);
+			user.send_data(SEND, idata);
+		}
+		*/
 	}
 	else
 	{
@@ -119,22 +126,28 @@ void ClientMenu::recv_data()
 {
 	while (1)
 	{
-		Packet packet = user.recv_data();
-		switch (packet.body.cmd)
+		Packet* packet = user.recv_data();
+		if (packet == nullptr)
+		{
+			MessageBox(_T("서버와 연결이 끊겼습니다"), _T("Connect"), MB_ICONINFORMATION);
+			user.disconnect();
+		}
+
+		switch (packet->body.cmd)
 		{
 		case CMD_USER_DATA_RECV:
 		{
-			CString recv_data(packet.body.data);
+			CString recv_data(packet->body.data);
 			CString notice_text = recv_data + (CString)" 보냄";
-			Notice.SetWindowText((notice_text));
-			cout << packet.body.data << endl;
+			//Notice.SetWindowText((notice_text));
+			cout << packet->body.data << "size : " << packet->head.dataSize << endl;
 			break;
 		}
 		case CMD_USER_LOG_RECV:
 		{
 			Notice.SetWindowText(L"로그 출력");
 			Log_Data.ResetContent();
-			string data = packet.body.data;
+			string data = packet->body.data;
 			int pos = 0;
 			for (int i = 0; i < data.size(); i++)
 			{
@@ -157,7 +170,7 @@ void ClientMenu::recv_data()
 		case CMD_USER_NAME_RECV:
 		{
 			users_name.ResetContent();
-			string data = packet.body.data;
+			string data = packet->body.data;
 			int pos = 0;
 			for (int i = 0; i < data.size(); i++)
 			{

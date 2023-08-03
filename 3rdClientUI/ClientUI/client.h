@@ -46,7 +46,7 @@ public:
 	void socket_close();
 
 	bool send_packet(CMD cmd,string data);
-	Packet recv_packet();
+	Packet* recv_packet();
 };
 
 

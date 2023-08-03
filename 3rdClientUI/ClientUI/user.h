@@ -23,7 +23,7 @@ public:
 	char* get_name();
 
 	bool send_data(CMD cmd,string data);
-	Packet recv_data();
+	Packet* recv_data();
 	
 	void disconnect();
 };

@@ -67,7 +67,6 @@ bool Client::send_packet(CMD cmd,string data)
 		strcpy(m_name, data.c_str());
 		strcpy(packet.body.data, data.c_str());
 		packet.head.dataSize = data.size();
-		cout << packet.head.dataSize << endl;
 		break;
 	}
 	case SEND:
@@ -75,7 +74,6 @@ bool Client::send_packet(CMD cmd,string data)
 		packet.body.cmd = CMD_USER_DATA_SEND;
 		strcpy(packet.body.data, data.c_str());
 		packet.head.dataSize = data.size();
-		cout << packet.head.dataSize << endl;
 		break;
 	}
 	case LOG:
@@ -107,32 +105,36 @@ bool Client::send_packet(CMD cmd,string data)
 
 
 
-Packet Client::recv_packet()
+Packet* Client::recv_packet()
 {
 	char buffer[sizeof(Packet)];
 	char make_buff[sizeof(Packet)];
 	Packet* packet = nullptr;
 	int len = 0;
 	int n = recv(m_sockfd, buffer, sizeof(buffer), 0);
+	if (n == 0)
+	{
+		cout << "disconnect server" << endl;
+		return packet;
+	}
 	if (n < 0)
 	{
 		cout << "recv error" << endl;
-		return *packet;
+		return packet;
 	}
 	memcpy(make_buff, buffer, n);
 	int recv_len = n;
 	while (recv_len < sizeof(Packet))
 	{
-		cout << "can't recv all Packet" << endl;
+		cout << "can't recv all Packet : " << n << endl;
 		char tmp_buffer[sizeof(Packet)];
 		n = recv(m_sockfd, tmp_buffer, sizeof(Packet)-recv_len, 0);
 		memcpy(make_buff + recv_len, tmp_buffer, n);
 		recv_len += n;
-		cout << recv_len << endl;
 	}
-	if (recv_len != sizeof(Packet)) cout << "===========ERROR==========" << endl;
+	if (recv_len != sizeof(Packet)) cout << "===========RECV PACKET ERROR==========" << endl;
 	packet = (Packet*)make_buff;
-	return *packet;
+	return packet;
 }
 
 	
