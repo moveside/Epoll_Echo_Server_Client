@@ -10,7 +10,7 @@
 class User
 {
 private:
-	char m_name[16];
+	char m_name[17];
 
 	Client client;
 

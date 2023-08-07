@@ -31,7 +31,7 @@ private:
 	WSADATA wsadata;
 	SOCKET m_sockfd;
 	SOCKADDR_IN m_addr;
-	char m_name[16];
+	char m_name[17];
 	Packet m_sendPacket;
 
 	thread send_thread;

@@ -75,7 +75,7 @@ void CClientUIDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 
 	DDX_Text(pDX, IDC_EDIT1, input_ID);
-	DDV_MaxChars(pDX, input_ID, 15);
+	DDV_MaxChars(pDX, input_ID, 8);
 }
 
 BEGIN_MESSAGE_MAP(CClientUIDlg, CDialogEx)

@@ -76,10 +76,11 @@ void ClientMenu::OnBnClickedButton1() // Send Button
 		user.send_data(SEND, sdata);
 		p->SetWindowTextW(L"");
 		/*
-		for (int i = 1; i <= 5000; i++)
+		while(1)
 		{
-			string idata = to_string(i);
-			user.send_data(SEND, idata);
+			user.send_data(SEND, sdata);
+			user.send_data(LOG, "");
+			user.send_data(DEL, "");
 		}
 		*/
 	}
@@ -129,7 +130,7 @@ void ClientMenu::recv_data()
 		Packet* packet = user.recv_data();
 		if (packet == nullptr)
 		{
-			MessageBox(_T("서버와 연결이 끊겼습니다"), _T("Connect"), MB_ICONINFORMATION);
+			MessageBox(_T("서버와 연결이 끊어졌습니다"), _T("Connect"), MB_ICONINFORMATION);
 			user.disconnect();
 		}
 
@@ -160,6 +161,8 @@ void ClientMenu::recv_data()
 					pos = i + 1;
 				}
 			}
+			Log_Data.SetCurSel(Log_Data.GetCount() - 1);
+
 			break;
 		}
 		case CMD_USER_DEL_RECV:
