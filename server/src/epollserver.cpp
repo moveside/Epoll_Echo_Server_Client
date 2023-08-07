@@ -52,15 +52,20 @@ void Epollserver::socket_bind()
 	m_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	m_addr.sin_port = htons(Port);
 
+	int option = 1;
+	setsockopt(m_sockfd,SOL_SOCKET,SO_REUSEADDR,&option,sizeof(option));
+
 	if(bind(m_sockfd,(struct sockaddr *)&m_addr,sizeof(m_addr)) < 0)
 	{
 		close(m_sockfd);
 		perror("socket bind");
+		exit(EXIT_FAILURE);
 	}
 	if(listen(m_sockfd,10) < 0)
 	{
 		close(m_sockfd);
 		perror("socket listen");
+		exit(EXIT_FAILURE);
 	}
 }
 void Epollserver::socket_ctl()
@@ -159,6 +164,9 @@ void Epollserver::thread_read()
 			}
 			packet->head.dataSize = 1;
 			packet->body.cmd = CMD_USER_LOGIN_RECV;
+			unique_lock<mutex> lock_push(request_mutex);
+
+			lock_push.unlock();
 			break;
 		}
 		case CMD_USER_DATA_SEND:
@@ -174,6 +182,54 @@ void Epollserver::thread_read()
 			packet->body.cmd = CMD_USER_DATA_RECV;
 			strcpy(packet->body.data, el.first->data);
 			packet->head.dataSize = strlen(el.first->data);
+
+			string log , name;
+			{
+				lock_guard<mutex> lock(log_mutex);
+
+				for (auto allLog : m_clients_log)
+				{
+					log += allLog.first;
+					log += " : ";
+					log += allLog.second;
+					log += "\n";
+				}
+			}
+			{
+				lock_guard<mutex> lock(user_mutex);
+				for(auto allName : m_user_name)
+				{
+					name += allName;
+					name += "\n";
+				}
+			}
+			{
+				lock_guard<mutex> lock(user_mutex);
+				for(auto user : m_users)
+				{
+					Packet *logPacket = new Packet;
+					strcpy(logPacket->head.head,"Aa");
+					strcpy(logPacket->tail.tail,"zZ");
+					logPacket->body.cmd = CMD_USER_LOG_RECV;
+					strcpy(logPacket->body.data,log.c_str());
+					packet->head.dataSize = log.size();
+
+					Packet *namePacket = new Packet;
+					strcpy(namePacket->head.head,"Aa");
+					strcpy(namePacket->tail.tail,"zZ");
+					namePacket->body.cmd = CMD_USER_NAME_RECV;
+					strcpy(namePacket->body.data,name.c_str());
+					packet->head.dataSize = name.size();
+					{
+						lock_guard<mutex> lock_push(send_mutex);
+						m_sendPool.push(make_pair(logPacket,user.first));
+						m_sendPool.push(make_pair(namePacket,user.first));
+					}
+					cv_send.notify_one();
+					cv_send.notify_one();
+				}
+			}
+
 			break;
 		}
 		case CMD_USER_DEL_SEND:
@@ -254,6 +310,7 @@ void Epollserver::thread_write()
 	{
 		unique_lock<mutex> lock(send_mutex);
 		cv_send.wait(lock,[this](){return !this->m_sendPool.empty();});
+
 
 		pair<Packet*,int> el = m_sendPool.front();
 		m_sendPool.pop();

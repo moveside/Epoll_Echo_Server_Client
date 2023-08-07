@@ -54,28 +54,24 @@ private:
 	int m_epfd;
 	struct epoll_event m_ev;
 	struct epoll_event m_events[Maxevent];
-	Packet m_sendPacket;
 
 	unordered_map<int,User*> m_users;
 	set<string> m_user_name;
 	list<pair<string,string>> m_clients_log;
 
-
 	vector<thread> threadPool;
 
-	queue <pair<COMBODY*,int>> m_requestPool;
-	queue <pair<Packet*,int>> m_sendPool;
-
 	// thread_read 관련 변수
+	queue <pair<COMBODY*,int>> m_requestPool;
 	condition_variable cv_request;
 	mutex request_mutex;
 	mutex user_mutex;
 	mutex log_mutex;
 	mutex username_mutex;
 	// thread_send 관련 변수
+	queue <pair<Packet*,int>> m_sendPool;
 	condition_variable cv_send;
 	mutex send_mutex;
-
 	// RingBuffer 관련 변수
 	RingBuffer ringbuffer;
 	condition_variable cv_ringbuffer;

@@ -115,7 +115,6 @@ pair<int,int> RingBuffer::find_head()
 		{
 			return make_pair(i,get<0>(el)[i+3]);
 		}
-
 	}
 	return make_pair(-1,-1);
 }
@@ -127,6 +126,7 @@ COMBODY* RingBuffer::find_body(int start,int size)
 	int index = start;
 	auto el = ringbuffer[rear];
 	body->cmd = static_cast<packetCommand>(get<0>(el)[index]);
+	dequeue_buffer(index,sizeof(packetCommand));
 	// data 추출
 	index += sizeof(packetCommand);
 	int deq_size = size;
